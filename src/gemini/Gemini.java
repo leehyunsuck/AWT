@@ -8,6 +8,35 @@ import java.util.Properties;
 public class Gemini {
     private URL url;
 
+    private String basicPrompt = """
+                Your role is a blogger.
+                Understand the topic of the question content properly and write an article to get an answer based on the topic.
+                
+                Writing Language: Korean
+                Blog Format: Subhead, Body, Summary
+                
+                Return String:
+                [tS] Made to relate to the content as if not written by ai [tE],
+                [cS] content [cE],
+                [hS] hashtag1, ..., hashtag10 [hE]
+                
+                Return Example:
+                [tS] This is a sample title [tE],
+                [cS] This is a sample content. [cE],
+                [hS] hashtag1, ..., hashtag10 [hE]
+
+                question:
+                [Q]
+                
+                a word of encouragement:
+                Blog Format is important.
+                Content is written in markdown format.
+                Add emojis that fit in the middle.
+                Make sure the content is written naturally and doesn't need to be modified manually.ompliance with the rules.
+                Replace any placeholders like [ ] with appropriate content.
+                Please write the content so I can upload it right away without having to modify it.
+                """;
+
     public Gemini() throws Exception {
         Properties prop = new Properties();
         try (FileInputStream fis = new FileInputStream("config.properties")) {
@@ -40,31 +69,27 @@ public class Gemini {
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json; utf-8");
 
-        String json =  "{\"contents\":[{\"parts\":[{\"text\":\"" + prompt + "\"}]}]}";
+        String replacePrompt = this.basicPrompt.replace("[Q]", prompt);
+
+        String json =  "{\"contents\":[{\"parts\":[{\"text\":\"" + replacePrompt + "\"}]}]}";
 
         try (OutputStream os = connection.getOutputStream()) {
             byte[] input = json.getBytes("utf-8");
             os.write(input, 0, input.length);
         }
 
-        System.out.println(connection.getResponseCode());
+        //connection.getResponseCode();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-            StringBuilder response = new StringBuilder();
             String responseLine = null;
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
-                System.out.println(responseLine);
+            while ((responseLine = br.readLine()) != null) if (responseLine.contains("\"text\"")) {
+                String tres = responseLine.trim();
+                System.out.println(tres.substring(tres.indexOf("[tS]") + 4,tres.indexOf("[tE]")).trim());
+                System.out.println(tres.substring(tres.indexOf("[cS]") + 4,tres.indexOf("[cE]")).trim());
+                System.out.println(tres.substring(tres.indexOf("[hS]") + 4,tres.indexOf("[hE]")).trim());
+                break;
             }
         }
+        //jsonRes.getString("")
     }
 }
-
-/*
-
-curl \
-  -H 'Content-Type: application/json' \
-  -d '{"contents":[{"parts":[{"text":"Explain how AI works"}]}]}' \
-  -X POST 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=YOUR_API_KEY'
-
- */
