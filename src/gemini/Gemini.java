@@ -1,5 +1,7 @@
 package gemini;
 
+import org.json.JSONObject;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -16,14 +18,18 @@ public class Gemini {
                 Blog Format: Subhead, Body, Summary
                 
                 Return String:
-                [tS] Made to relate to the content as if not written by ai [tE],
-                [cS] content [cE],
-                [hS] hashtag1, ..., hashtag10 [hE]
+                {
+                    title : Made to relate to the content as if not written by ai,
+                    content : content ,
+                    hashtags : #hashtag1, ..., #hashtag10
+                }
                 
                 Return Example:
-                [tS] This is a sample title [tE],
-                [cS] This is a sample content. [cE],
-                [hS] hashtag1, ..., hashtag10 [hE]
+                {
+                    title : This is a sample title,
+                    content : This is a sample content.,
+                    hashtags : #hashtag1, ..., #hashtag10
+                }
 
                 question:
                 [Q]
@@ -80,16 +86,32 @@ public class Gemini {
 
         //connection.getResponseCode();
 
+        // 받은 값 읽기
         try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-            String responseLine = null;
-            while ((responseLine = br.readLine()) != null) if (responseLine.contains("\"text\"")) {
-                String tres = responseLine.trim();
-                System.out.println(tres.substring(tres.indexOf("[tS]") + 4,tres.indexOf("[tE]")).trim());
-                System.out.println(tres.substring(tres.indexOf("[cS]") + 4,tres.indexOf("[cE]")).trim());
-                System.out.println(tres.substring(tres.indexOf("[hS]") + 4,tres.indexOf("[hE]")).trim());
-                break;
+            StringBuilder response = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
             }
+            JSONObject jsonResponse = new JSONObject(response.toString());
+
+            // text 부분 추출
+            String text = jsonResponse.getJSONArray("candidates").getJSONObject(0)
+                    .getJSONObject("content").getJSONArray("parts")
+                    .getJSONObject(0).getString("text");
+
+            // 필요 없는 부분 제거
+            text = text.replace("```json", "").replace("```", "").trim();
+
+            // 필요한 부분만 추출
+            JSONObject content = new JSONObject(text);
+            String title = content.getString("title");
+            String contentText = content.getString("content");
+            String hashtags = content.getString("hashtags");
+
+            System.out.println("Title: " + title);
+            System.out.println("Content: " + contentText);
+            System.out.println("Hashtags: " + hashtags);
         }
-        //jsonRes.getString("")
     }
 }
