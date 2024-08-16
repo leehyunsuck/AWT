@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class Gemini {
@@ -21,14 +22,14 @@ public class Gemini {
                 {
                     title : Made to relate to the content as if not written by ai,
                     content : content ,
-                    hashtags : #hashtag1, ..., #hashtag10
+                    hashtags : hashtag1 hashtag2 ... hashtag10
                 }
                 
                 Return Example:
                 {
                     title : This is a sample title,
                     content : This is a sample content.,
-                    hashtags : #hashtag1, ..., #hashtag10
+                    hashtags : hashtag1 hashtag2 ... hashtag10
                 }
 
                 question:
@@ -107,11 +108,14 @@ public class Gemini {
             JSONObject content = new JSONObject(text);
             String title = content.getString("title");
             String contentText = content.getString("content");
-            String hashtags = content.getString("hashtags");
+            String[] hashtags = content.getString("hashtags").split(", ");
 
             System.out.println("Title: " + title);
             System.out.println("Content: " + contentText);
-            System.out.println("Hashtags: " + hashtags);
+            System.out.print("Hashtags: ");
+            Arrays.stream(hashtags).forEach(System.out::print);
+
+
         }
     }
 }
