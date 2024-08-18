@@ -1,7 +1,9 @@
 package tistoy;
 
+import org.json.JSONObject;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -21,6 +23,11 @@ public class TistoryWrite {
         this.driver = new ChromeDriver();
         this.wait = new WebDriverWait(this.driver, Duration.ofSeconds(20));
         this.join();
+    }
+
+    public static String filterBMPCharacters(String input) {
+        // Supplementary Plane 문자 제거
+        return input.replaceAll("[\\uD800-\\uDFFF]", "");
     }
 
     private void join() {
@@ -60,7 +67,9 @@ public class TistoryWrite {
         }
     }
 
-    public void request(String title, String content, String hashtags) throws InterruptedException {
+    public void request(String[] info) throws InterruptedException {
+        String  title = info[0],
+                content = info[1];
 
         // 프로필 링크 나타날 때까지 대기
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("a.link_profile")));
@@ -96,30 +105,46 @@ public class TistoryWrite {
             // 경고창이 없으면 무시
         }
 
-        // 제목, 내용, 해쉬태그 입력
-        WebElement titleField = driver.findElement(By.id("post-title-inp"));
-        titleField.sendKeys(title);
+
+        String filteredTitle = filterBMPCharacters(title); // BMP 범위를 초과하는 문자를 제거합니다
+        // 제목 필드에 값 입력
+        WebElement titleField = wait.until(ExpectedConditions.elementToBeClickable(By.id("post-title-inp")));
+        titleField.sendKeys(filteredTitle);
 
         WebElement editorContainer = wait.until(ExpectedConditions.elementToBeClickable(By.id("markdown-editor-container")));
         editorContainer.click();
 
+
         JavascriptExecutor js = (JavascriptExecutor) driver;
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("content", content);
+        String jsonString = jsonObject.toString();
         String script = "var cm = document.querySelectorAll('.CodeMirror')[1].CodeMirror;" +
-                "cm.setValue('[content]');".replace("[content]", content);
-        js.executeScript(script);
+                "cm.setValue(JSON.parse(arguments[0]).content);" +
+                "setTimeout(function() { cm.refresh(); }, 1000);";
+        js.executeScript(script, jsonString);
 
 
-        String[] tags = {"태그1", "태그2", "태그3", "태그4", "태그5", "태그6", "태그7", "태그8", "태그9", "태그10"};
+        Actions actions = new Actions(driver);
+        editorContainer.click();
+        actions.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).perform();
+        actions.keyDown(Keys.CONTROL).sendKeys("c").keyUp(Keys.CONTROL).perform();
+        actions.keyDown(Keys.CONTROL).sendKeys("v").keyUp(Keys.CONTROL).perform();
+
+
+        String[] tags = new String[info.length-2];
+        for (int i = 2; i < info.length; i++) tags[i-2] = info[i];
 
         // 태그 입력 필드 찾기
         WebElement tagInputField = driver.findElement(By.id("tagText"));
 
-        // 배열을 통해 태그 입력
-        for (String tag : tags) {
-            tagInputField.sendKeys(tag);
+        for (int i = 0; i < tags.length && i < 10; i++) {
+            tagInputField.sendKeys(tags[i]);
             tagInputField.sendKeys(Keys.ENTER);
-            Thread.sleep(500);  // 태그가 추가되는 시간을 고려한 잠시 대기
+            Thread.sleep(250);
         }
+
+        Thread.sleep(1000000);
 
         // 글 작성 완료
         WebElement checkButton = driver.findElement(By.id("publish-layer-btn"));
