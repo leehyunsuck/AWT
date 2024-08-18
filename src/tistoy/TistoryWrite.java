@@ -1,6 +1,5 @@
 package tistoy;
 
-import org.json.JSONObject;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.interactions.Actions;
@@ -116,13 +115,9 @@ public class TistoryWrite {
 
 
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("content", content);
-        String jsonString = jsonObject.toString();
         String script = "var cm = document.querySelectorAll('.CodeMirror')[1].CodeMirror;" +
-                "cm.setValue(JSON.parse(arguments[0]).content);" +
-                "setTimeout(function() { cm.refresh(); }, 1000);";
-        js.executeScript(script, jsonString);
+                "cm.setValue('[content]');".replace("[content]", content);
+        js.executeScript(script);
 
 
         Actions actions = new Actions(driver);
