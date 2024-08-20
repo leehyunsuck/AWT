@@ -50,7 +50,6 @@ public class Gemini {
                 """;
 
     public Gemini() throws Exception {
-        logger.accept("Create new object");
         Properties prop = new Properties();
         try (FileInputStream fis = new FileInputStream("config.properties")) {
             prop.load(fis);
@@ -71,72 +70,77 @@ public class Gemini {
     }
 
     public String[] request(String prompt) throws IOException {
-        logger.accept("Request setting");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setDoOutput(true);
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json; utf-8");
+        String[] result;
+        try {
+            logger.accept("Request setting");
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json; utf-8");
 
-        // 이스케이프 처리 및 JSON 문자열 생성
-        String replacePrompt = this.basicPrompt.replace("[Q]", prompt);
-        String escapedPrompt = replacePrompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+            // 이스케이프 처리 및 JSON 문자열 생성
+            String replacePrompt = this.basicPrompt.replace("[Q]", prompt);
+            String escapedPrompt = replacePrompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
 
-        String json = String.format("{\"contents\":[{\"parts\":[{\"text\":\"%s\"}]}]}", escapedPrompt);
+            String json = String.format("{\"contents\":[{\"parts\":[{\"text\":\"%s\"}]}]}", escapedPrompt);
+            logger.accept("Generated JSON: " + json);
 
-
-        logger.accept("Generated JSON: " + json);
-        logger.accept("Request start");
-
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = json.getBytes("utf-8");
-            os.write(input, 0, input.length);
-        }
-
-        logger.accept("Response Code : " + connection.getResponseCode());
-
-        // 받은 값 읽기
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-            StringBuilder response = new StringBuilder();
-            String responseLine;
-
-            logger.accept("White space removal in progress");
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
+            logger.accept("Request start");
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = json.getBytes("utf-8");
+                os.write(input, 0, input.length);
             }
-            logger.accept("White space removal complete");
 
-            // 응답 로그 출력
-            logger.accept("Response: " + response.toString());
+            logger.accept("Response Code : " + connection.getResponseCode());
 
-            logger.accept("JSON parsing start");
-            JSONObject jsonResponse = new JSONObject(response.toString());
+            // 받은 값 읽기
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+                StringBuilder response = new StringBuilder();
+                String responseLine;
 
-            // "candidates" 키로 응답 파싱
-            JSONObject candidate = jsonResponse.getJSONArray("candidates").getJSONObject(0);
-            JSONObject content = candidate.getJSONObject("content");
-            String text = content.getJSONArray("parts").getJSONObject(0).getString("text");
+                logger.accept("White space removal in progress");
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+                logger.accept("White space removal complete");
 
-            logger.accept("Text extracted: " + text);
+                // 응답 로그 출력
+                logger.accept("Response: " + response.toString());
 
-            // 전처리 수행
-            text = preprocessJsonString(text);
+                logger.accept("JSON parsing start");
+                JSONObject jsonResponse = new JSONObject(response.toString());
 
-            logger.accept("Preprocessed JSON: " + text);
+                // "candidates" 키로 응답 파싱
+                JSONObject candidate = jsonResponse.getJSONArray("candidates").getJSONObject(0);
+                JSONObject content = candidate.getJSONObject("content");
+                String text = content.getJSONArray("parts").getJSONObject(0).getString("text");
 
-            // JSON에서 중첩된 JSON 문자열 파싱
-            JSONObject contentJson = new JSONObject(text);
-            logger.accept("JSON parsing complete");
+                logger.accept("Text extracted: " + text);
 
-            String title = contentJson.optString("title", "").replaceAll("[\\p{So}\\p{C}]", "").trim();
-            String contentText = contentJson.optString("content", "").trim();
-            String[] hashtags = contentJson.optString("hashtags", "").split(",\\s*");
+                // 전처리 수행
+                text = preprocessJsonString(text);
 
-            String[] result = new String[hashtags.length + 2];
-            result[0] = title;
-            result[1] = contentText;
-            for (int i = 2; i < result.length; i++) result[i] = hashtags[i - 2];
-            logger.accept("Return success");
-            return result;
+                logger.accept("Preprocessed JSON: " + text);
+
+                // JSON에서 중첩된 JSON 문자열 파싱
+                JSONObject contentJson = new JSONObject(text);
+                logger.accept("JSON parsing complete");
+
+                String title = contentJson.optString("title", "").replaceAll("[\\p{So}\\p{C}]", "").trim();
+                String contentText = contentJson.optString("content", "").trim();
+                String[] hashtags = contentJson.optString("hashtags", "").split(",\\s*");
+
+                result = new String[hashtags.length + 2];
+                result[0] = title;
+                result[1] = contentText;
+                for (int i = 2; i < result.length; i++) result[i] = hashtags[i - 2];
+                logger.accept("Return success");
+            }
+        } catch (Exception e) {
+            logger.accept("Error : " + e.getMessage());
+            logger.accept("Restart");
+            return this.request(prompt);
         }
+        return result;
     }
 }

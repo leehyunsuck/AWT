@@ -6,9 +6,8 @@ public class Main {
         System.out.println("Start Program");
 
         Gemini gemini = new Gemini();
-        String[] aiAnswer = gemini.request("마인크래프트 1.21 버전에서 치즐 모드 사용하는 방법이 있나요?");
 
         TistoryWrite tistoryWrite = new TistoryWrite();
-        tistoryWrite.request(aiAnswer);
+        tistoryWrite.request(gemini.request("러시아 우크라이나 전쟁 관련"));
     }
 }
