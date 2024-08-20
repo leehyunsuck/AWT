@@ -1,13 +1,20 @@
 import gemini.Gemini;
 import tistoy.TistoryWrite;
 
+import java.util.Scanner;
+
 public class Main {
     public static void main(String[] args) throws Exception {
-        System.out.println("Start Program");
-
         Gemini gemini = new Gemini();
 
         TistoryWrite tistoryWrite = new TistoryWrite();
-        tistoryWrite.request(gemini.request("러시아 우크라이나 전쟁 관련"));
+
+        while(true) {
+            System.out.print("[Input] Enter 'stop' to exit or any other input to continue: ");
+            Scanner scanner = new Scanner(System.in);
+            String input = scanner.nextLine();
+            if(input.toLowerCase().equals("stop")) break;
+            tistoryWrite.request(gemini.request(input));
+        }
     }
 }

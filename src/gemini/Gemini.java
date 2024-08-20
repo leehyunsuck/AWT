@@ -83,7 +83,7 @@ public class Gemini {
             String escapedPrompt = replacePrompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
 
             String json = String.format("{\"contents\":[{\"parts\":[{\"text\":\"%s\"}]}]}", escapedPrompt);
-            logger.accept("Generated JSON: " + json);
+            //logger.accept("Generated JSON: " + json);
 
             logger.accept("Request start");
             try (OutputStream os = connection.getOutputStream()) {
@@ -105,7 +105,7 @@ public class Gemini {
                 logger.accept("White space removal complete");
 
                 // 응답 로그 출력
-                logger.accept("Response: " + response.toString());
+                //logger.accept("Response: " + response.toString());
 
                 logger.accept("JSON parsing start");
                 JSONObject jsonResponse = new JSONObject(response.toString());
@@ -115,12 +115,12 @@ public class Gemini {
                 JSONObject content = candidate.getJSONObject("content");
                 String text = content.getJSONArray("parts").getJSONObject(0).getString("text");
 
-                logger.accept("Text extracted: " + text);
+                //logger.accept("Text extracted: " + text);
 
                 // 전처리 수행
                 text = preprocessJsonString(text);
 
-                logger.accept("Preprocessed JSON: " + text);
+                //logger.accept("Preprocessed JSON: " + text);
 
                 // JSON에서 중첩된 JSON 문자열 파싱
                 JSONObject contentJson = new JSONObject(text);
