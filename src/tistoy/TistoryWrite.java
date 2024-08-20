@@ -212,6 +212,8 @@ public class TistoryWrite {
         Thread.sleep(250);
 
         logger.accept("Blog post upload successful");
+        
+        // url 받기 추가해야함
     }
 
 }
