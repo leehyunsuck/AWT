@@ -1,13 +1,16 @@
 package gemini;
 
+import configLoader.ConfigLoader;
 import org.json.JSONObject;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Properties;
 import java.util.function.Consumer;
 
 public class Gemini {
@@ -50,22 +53,12 @@ public class Gemini {
                 """;
 
     public Gemini() throws Exception {
-        Properties prop = new Properties();
-        try (FileInputStream fis = new FileInputStream("config.properties")) {
-            prop.load(fis);
-            logger.accept("Load config.properties");
-        } catch (IOException e) {
-            e.printStackTrace();
-            logger.accept("Failed to load config.properties");
-        }
-
-        this.url = new URL(prop.getProperty("gemini.url.flash") + prop.getProperty("gemini.api.key"));
+        ConfigLoader configLoader = new ConfigLoader();
+        this.url = new URL(configLoader.getProperty("gemini.url") + configLoader.getProperty("gemini.api.key"));
     }
 
     private String preprocessJsonString(String jsonString) {
-        // 코드 블록 마커 제거
         jsonString = jsonString.replaceAll("```json\\s*", "").replaceAll("\\s*```\\s*$", "");
-        // 이스케이프 처리
         return jsonString.replaceAll("(?<!\\\\)\\\\(?![\"\\\\])", "\\\\\\\\");
     }
 
@@ -78,19 +71,18 @@ public class Gemini {
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json; utf-8");
 
-            // 이스케이프 처리 및 JSON 문자열 생성
+            // 이스케이프 처리
             String replacePrompt = this.basicPrompt.replace("[Q]", prompt);
             String escapedPrompt = replacePrompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
 
+            // JSON 문자열 생성
             String json = String.format("{\"contents\":[{\"parts\":[{\"text\":\"%s\"}]}]}", escapedPrompt);
-            //logger.accept("Generated JSON: " + json);
 
             logger.accept("Request start");
             try (OutputStream os = connection.getOutputStream()) {
                 byte[] input = json.getBytes("utf-8");
                 os.write(input, 0, input.length);
             }
-
             logger.accept("Response Code : " + connection.getResponseCode());
 
             // 받은 값 읽기
@@ -104,9 +96,6 @@ public class Gemini {
                 }
                 logger.accept("White space removal complete");
 
-                // 응답 로그 출력
-                //logger.accept("Response: " + response.toString());
-
                 logger.accept("JSON parsing start");
                 JSONObject jsonResponse = new JSONObject(response.toString());
 
@@ -115,25 +104,26 @@ public class Gemini {
                 JSONObject content = candidate.getJSONObject("content");
                 String text = content.getJSONArray("parts").getJSONObject(0).getString("text");
 
-                //logger.accept("Text extracted: " + text);
-
                 // 전처리 수행
                 text = preprocessJsonString(text);
-
-                //logger.accept("Preprocessed JSON: " + text);
 
                 // JSON에서 중첩된 JSON 문자열 파싱
                 JSONObject contentJson = new JSONObject(text);
                 logger.accept("JSON parsing complete");
 
+                logger.accept("Return value setting start");
                 String title = contentJson.optString("title", "").replaceAll("[\\p{So}\\p{C}]", "").trim();
                 String contentText = contentJson.optString("content", "").trim();
                 String[] hashtags = contentJson.optString("hashtags", "").split(",\\s*");
 
+                if (hashtags.length == 1) hashtags = contentJson.optString("hashtags", "").replace("#", "").split(" ");
+
                 result = new String[hashtags.length + 2];
                 result[0] = title;
                 result[1] = contentText;
+
                 for (int i = 2; i < result.length; i++) result[i] = hashtags[i - 2];
+
                 logger.accept("Return success");
             }
         } catch (Exception e) {

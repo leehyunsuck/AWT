@@ -10,11 +10,17 @@ public class Main {
         TistoryWrite tistoryWrite = new TistoryWrite();
 
         while(true) {
-            System.out.print("[Input] Enter 'stop' to exit or any other input to continue: ");
+            System.out.print("[Input] Enter 'SS#' to exit or any other input to continue and Enter 'S#' : ");
             Scanner scanner = new Scanner(System.in);
-            String input = scanner.nextLine();
-            if(input.toLowerCase().equals("stop")) break;
-            tistoryWrite.request(gemini.request(input));
+            StringBuilder input = new StringBuilder();
+
+            while (true) {
+                String line = scanner.nextLine();
+                if (line.trim().equals("S.AWT")) return;
+                if (line.trim().equalsIgnoreCase("S.INPUT")) break;
+                input.append(line).append("\n");
+            }
+            tistoryWrite.request(gemini.request(input.toString()));
         }
     }
 }
