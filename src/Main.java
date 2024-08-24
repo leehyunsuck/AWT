@@ -16,8 +16,8 @@ public class Main {
 
             while (true) {
                 String line = scanner.nextLine();
-                if (line.trim().equals("S.AWT")) return;
-                if (line.trim().equalsIgnoreCase("S.INPUT")) break;
+                if (line.trim().equals("SS#")) return;
+                if (line.trim().equalsIgnoreCase("S#")) break;
                 input.append(line).append("\n");
             }
             tistoryWrite.request(gemini.request(input.toString()));

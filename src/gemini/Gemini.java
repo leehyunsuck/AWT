@@ -22,35 +22,36 @@ public class Gemini {
     private static String prefix = "[Gemini Logger] ";
 
     private String basicPrompt = """
-                role : blogger
-                goal : write an article based on the topic of the question content
-                writing language: korean
-                blog Format: Subhead, Body, Summary
-                
-                Return Example:
-                {
-                    title : Made to relate to the content as if not written by ai,
-                    content : Escaped Markdown Format Content. Make it as clean and look good as possible. (Don't use emojis)
-                    hashtags : hashtag1 hashtag2 ... hashtag10 (total 10 hashtags, no more, no less)
-                }
+            role: blogger
+            goal: write an article based on the topic of the question content
+            writing language: Korean
+            blog Format: Subhead, Body, Summary
 
-                question:
-                [Q]
-                
-                rule : 
-                {
-                    Add emojis that fit in the middle,
-                    Make sure the content is written naturally and doesn't need to be modified manually,
-                }
-               
-                Escape special characters: Ensure all special characters in strings are properly escaped (\\n as \\\\n, " as \\", \\ as \\\\).
-                Grammar and style: Ensure content is grammatically correct and written naturally.
-                Headers and delimiters: Use clear headers and delimiters to separate different parts of the response.
-                Exception handling: Properly handle exceptions and provide meaningful error messages.            
-                Testing: Conduct tests for various scenarios and edge cases.
-                
-                Important: Always escape backslashes in file paths. For example, write "C:\\\\Program Files\\\\Minecraft" instead of "C:\\Program Files\\Minecraft".
-                """;
+            Return Example:
+            {
+                "title": "Made to relate to the content as if not written by AI",
+                "content": "Escaped Markdown Format Content. Make it as clean and look good as possible.",
+                "hashtags": "hashtag1 hashtag2 hashtag3 hashtag4 hashtag5 hashtag6 hashtag7 hashtag8 hashtag9 hashtag10"
+            }
+
+            question:
+            [Q]
+
+            rule:
+            {
+                "Write down the content that gives you an answer to the question unconditionally",
+                "Add emojis that fit in the middle",
+                "Make sure the content is written naturally and doesn't need to be modified manually",
+                "Escape special characters: Ensure all special characters in strings are properly escaped (\\\\n as \\\\\\\\n, \\" as \\\\\\", \\\\ as \\\\\\\\)",
+                "Grammar and style: Ensure content is grammatically correct and written naturally",
+                "Headers and delimiters: Use clear headers and delimiters to separate different parts of the response",
+                "Exception handling: Properly handle exceptions and provide meaningful error messages",
+                "Testing: Conduct tests for various scenarios and edge cases"
+            }
+
+            Important: Always escape backslashes in file paths. For example, write "C:\\\\\\\\Program Files\\\\\\\\Minecraft" instead of "C:\\\\Program Files\\\\Minecraft".
+
+            """;
 
     public Gemini() throws Exception {
         ConfigLoader configLoader = new ConfigLoader();
@@ -96,8 +97,11 @@ public class Gemini {
                 }
                 logger.accept("White space removal complete");
 
+                //logger.accept(response.toString());
+
                 logger.accept("JSON parsing start");
-                JSONObject jsonResponse = new JSONObject(response.toString());
+                String jsonString = response.toString().trim();
+                JSONObject jsonResponse = new JSONObject(jsonString);
 
                 // "candidates" 키로 응답 파싱
                 JSONObject candidate = jsonResponse.getJSONArray("candidates").getJSONObject(0);
@@ -129,7 +133,7 @@ public class Gemini {
         } catch (Exception e) {
             logger.accept("Error : " + e.getMessage());
             logger.accept("Restart");
-            return this.request(prompt);
+            return this.request(prompt + " 에러가 발생했습니다: " + e.getMessage().replace("\"", "\\\"").replace("\n", "\\n"));
         }
         return result;
     }

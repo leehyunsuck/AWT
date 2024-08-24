@@ -31,9 +31,9 @@ public class TistoryWrite {
 
         // ChromeOptions 설정
         ChromeOptions options = new ChromeOptions();
-//        options.addArguments("--headless"); // 헤드리스 모드 설정
-//        options.addArguments("--disable-gpu"); // GPU 비활성화 (헤드리스 모드에서 권장)
-//        options.addArguments("--window-size=1920,1080"); // 창 크기 설정 (헤드리스 모드에서 권장)
+        options.addArguments("--headless"); // 헤드리스 모드 설정
+        options.addArguments("--disable-gpu"); // GPU 비활성화 (헤드리스 모드에서 권장)
+        options.addArguments("--window-size=1920,1080"); // 창 크기 설정 (헤드리스 모드에서 권장)
 
         this.driver = new ChromeDriver(options);
         logger.accept("WebDriver setup complete");
