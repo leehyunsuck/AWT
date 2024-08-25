@@ -1,6 +1,7 @@
 import gemini.Gemini;
 import tistoy.TistoryWrite;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class Main {
@@ -11,7 +12,7 @@ public class Main {
 
         while(true) {
             System.out.print("[Input] Enter 'SS#' to exit or any other input to continue and Enter 'S#' : ");
-            Scanner scanner = new Scanner(System.in);
+            Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8);
             StringBuilder input = new StringBuilder();
 
             while (true) {
@@ -20,7 +21,7 @@ public class Main {
                 if (line.trim().equalsIgnoreCase("S#")) break;
                 input.append(line).append("\n");
             }
-            tistoryWrite.request(gemini.request(input.toString()));
+            tistoryWrite.request(gemini.request(input.toString(), " ", " "));
         }
     }
 }

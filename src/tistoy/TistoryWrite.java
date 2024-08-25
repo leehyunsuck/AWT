@@ -13,6 +13,7 @@ import java.awt.datatransfer.StringSelection;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Random;
 import java.util.function.Consumer;
 
 public class TistoryWrite {
@@ -22,6 +23,23 @@ public class TistoryWrite {
 
     Consumer<String> logger = n -> System.out.println(this.prefix + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + " " + n);
     private static String prefix = "[Tistory Logger] ";
+
+    private static String[] fixedComment = {
+            "답변을 블로그에 입력해보았습니다",
+            "블로그에 답변을 작성해봤습니다",
+            "다음 내용이 도움이 되면 좋겠네요",
+            "필요한 내용을 찾아봤습니다",
+            "블로그에 관련 내용을 정리해두었습니다",
+            "블로그에 자세한 답변을 남겼습니다",
+            "블로그에서 더 많은 정보를 확인해보세요",
+            "블로그에 참고할 만한 내용을 올렸습니다",
+            "블로그에 답변을 추가했습니다",
+            "블로그에 유용한 정보를 작성했습니다",
+            "블로그에 답변을 업데이트했습니다",
+            "블로그에 관련 정보를 게시했습니다",
+            "블로그에 답변을 남겨두었습니다",
+            "블로그에 필요한 내용을 작성해두었습니다"
+    };
 
     public TistoryWrite() {
         // WebDriver 경로 설정
@@ -208,7 +226,9 @@ public class TistoryWrite {
         }
 
         WebElement linkElement = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("ul.list_post.list_post_type2 > li:first-child > div.post_cont > strong.tit_post.tit_ellip > a")));
-        String hrefValue = linkElement.getAttribute("href");
+
+        Random dice = new Random();
+        String hrefValue = fixedComment[dice.nextInt(fixedComment.length)] + "\n" + linkElement.getAttribute("href");
         StringSelection stringSelection = new StringSelection(hrefValue);
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
     }

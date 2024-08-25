@@ -51,6 +51,8 @@ public class Gemini {
 
             Important: Always escape backslashes in file paths. For example, write "C:\\\\\\\\Program Files\\\\\\\\Minecraft" instead of "C:\\\\Program Files\\\\Minecraft".
 
+            [Answer]
+            [Error]
             """;
 
     public Gemini() throws Exception {
@@ -63,8 +65,9 @@ public class Gemini {
         return jsonString.replaceAll("(?<!\\\\)\\\\(?![\"\\\\])", "\\\\\\\\");
     }
 
-    public String[] request(String prompt) throws IOException {
+    public String[] request(String prompt, String answer, String error) throws IOException {
         String[] result;
+        StringBuilder response = new StringBuilder();
         try {
             logger.accept("Request setting");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -72,12 +75,15 @@ public class Gemini {
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json; utf-8");
 
+            String replacePrompt = this.basicPrompt.replace("[Q]", prompt).replace("[Answer]", answer).replace("[Error]", error);
+
             // 이스케이프 처리
-            String replacePrompt = this.basicPrompt.replace("[Q]", prompt);
             String escapedPrompt = replacePrompt.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
 
             // JSON 문자열 생성
             String json = String.format("{\"contents\":[{\"parts\":[{\"text\":\"%s\"}]}]}", escapedPrompt);
+
+            //logger.accept(json);
 
             logger.accept("Request start");
             try (OutputStream os = connection.getOutputStream()) {
@@ -88,7 +94,6 @@ public class Gemini {
 
             // 받은 값 읽기
             try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-                StringBuilder response = new StringBuilder();
                 String responseLine;
 
                 logger.accept("White space removal in progress");
@@ -133,7 +138,8 @@ public class Gemini {
         } catch (Exception e) {
             logger.accept("Error : " + e.getMessage());
             logger.accept("Restart");
-            return this.request(prompt + " 에러가 발생했습니다: " + e.getMessage().replace("\"", "\\\"").replace("\n", "\\n"));
+            return this.request(prompt, "Your answer to the above:" + response.toString(), "Error : " + e.getMessage().replace("\"", "\\\"").replace("\n", "\\n"));
+            //return this.request(prompt + " 에러가 발생했습니다: " + e.getMessage().replace("\"", "\\\"").replace("\n", "\\n"));
         }
         return result;
     }
